@@ -1,0 +1,61 @@
+---
+title: "Schmid LG Data Analysis" 
+author: "ET" 
+date: "`r lubridate::today()`"
+format: 
+  html:
+    toc: true 
+    toc_depth: 4
+    embed-resources: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(lme4)
+library(tidyverse)
+library(broom)
+library(skimr)
+library(stringr)
+options(conflicts.policy = "depends.ok")
+
+theme_set(theme_classic()) 
+devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/case_analysis.R?raw=true")
+
+path_data <- "data"
+```
+
+# Read in the data
+```{r}
+data <- read_csv(here::here(path_data, "Experiment 1 RSI 1000 ms.CSV"), show_col_types = FALSE) |> 
+  glimpse()
+```
+
+# Consider only trials with correct answers
+```{r}
+d2 <- data |> filter(ACC == "1")
+```
+
+# Create exposure variable, ambiguity variable
+```{r}
+d2 <- d2 |> mutate(Exposure = Block - 1)
+
+# Filter out NAN values?
+d2 <- d2 |> filter(Level.0 != "NaN")
+```
+
+# RT Model using Level.0 character value
+```{r}
+m_1 <- lmer(RT ~ Exposure * Level.0 + (1 | Participant), data = d2)
+
+(summary(m_1))
+```
+
+# RT Model using Ambiguity as Level.0 Numeric value
+```{r}
+d2 <- d2 |> 
+  mutate(Ambiguity0 = if_else(Level.0 == "Non-disambiguated", 0, 1))
+
+m_2 <- lmer(RT ~ scale(Exposure, scale = FALSE) * scale(Ambiguity0, scale = FALSE) + (1 | Participant), data = d2)
+(summary(m_2))
+```
