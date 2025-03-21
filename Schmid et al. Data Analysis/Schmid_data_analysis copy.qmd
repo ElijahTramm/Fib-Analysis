@@ -1,0 +1,120 @@
+---
+title: "Schmid LG Data Analysis" 
+author: "ET" 
+date: "`r lubridate::today()`"
+format: 
+  html:
+    toc: true 
+    toc_depth: 4
+    embed-resources: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(lme4)
+library(tidyverse)
+library(broom)
+library(skimr)
+library(stringr)
+options(conflicts.policy = "depends.ok")
+
+theme_set(theme_classic()) 
+devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/case_analysis.R?raw=true")
+
+path_data <- "data"
+```
+
+# Read in the data
+```{r}
+data <- read_csv(here::here(path_data, "Experiment 1 RSI 1000 ms.CSV"), show_col_types = FALSE) |> 
+  glimpse()
+```
+
+# Level 0
+
+## Consider only trials with correct answers
+```{r}
+d2 <- data |> filter(ACC == "1")
+```
+
+## Create exposure variable, ambiguity variable
+```{r}
+d2 <- d2 |> mutate(Exposure = Block - 1)
+
+# Filter out NAN values?
+d2 <- d2 |> filter(Level.0 != "NaN")
+```
+
+## RT Model using Level.0 character value
+```{r}
+m_1 <- lmer(RT ~ Exposure * Level.0 + (1 | Participant), data = d2)
+
+(summary(m_1))
+```
+
+## RT Model using Ambiguity as Level.0 Numeric value
+```{r}
+d2 <- d2 |> 
+  mutate(Ambiguity0 = if_else(Level.0 == "Non-disambiguated", 0, 1))
+
+m_2 <- lmer(RT ~ scale(Exposure, scale = FALSE) * scale(Ambiguity0, scale = FALSE) + (1 | Participant), data = d2)
+(summary(m_2))
+```
+
+
+# Level 1
+```{r}
+d3 <- data |> filter(ACC == "1")
+
+d3 <- d3 |> mutate(Exposure = Block - 1)
+
+# Filter out NAN values?
+d3 <- d3 |> filter(Level.1 != "NaN")
+```
+
+```{r}
+d3 <- d3 |> 
+  mutate(Ambiguity1 = if_else(Level.1 == "Non-disambiguated", 0, 1))
+
+m_3 <- lmer(RT ~ scale(Exposure, scale = FALSE) * scale(Ambiguity1, scale = FALSE) + (1 | Participant), data = d3)
+summary(m_3)
+```
+
+# Level 2
+
+```{r}
+d4 <- data |> filter(ACC == "1")
+
+d4 <- d4 |> mutate(Exposure = Block - 1)
+
+# Filter out NAN values?
+d4 <- d4 |> filter(Level.2 != "NaN")
+```
+
+```{r}
+d4 <- d4 |> 
+  mutate(Ambiguity2 = if_else(Level.2 == "Non-disambiguated", 0, 1))
+
+m_4 <- lmer(RT ~ scale(Exposure, scale = FALSE) * scale(Ambiguity2, scale = FALSE) + (1 | Participant), data = d4)
+summary(m_4)
+```
+
+# Level 3
+
+```{r}
+d5 <- data |> filter(ACC == "1")
+
+d5 <- d5 |> mutate(Exposure = Block - 1)
+
+# Filter out NAN values?
+d5 <- d5 |> filter(Level.3 != "NaN")
+```
+
+```{r}
+d5 <- d5 |>
+  mutate(Ambiguity3 = if_else(Level.3 == "Non-disambiguated", 0, 1))
+
+m_5 <- lmer(RT ~ scale(Exposure, scale = FALSE) * scale(Ambiguity3, scale = FALSE) + (1 | Participant), data = d5)
+summary(m_5)
+```
